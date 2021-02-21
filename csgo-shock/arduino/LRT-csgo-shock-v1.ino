@@ -23,6 +23,9 @@
 #define SENSOR A0
 #define STRIKE_TIME 50 //(ms)
 
+//******İzleyici modunda hasar almama modunu açma kapama değişkeni*************
+boolean spectate_no_damage = true, user_alive = true, power_off_on_spectate = false;
+
 //**********************Kütüphane tanımlamaları********************************
 #include <SPI.h>
 #include <Wire.h>
@@ -265,14 +268,22 @@ void showNewData()
 
     newValue = atoi(receivedChars);
     newData = false;
-    if (newValue == 100)
+    if (newValue == 100){
       oldValue = 100;
-    if (((oldValue - newValue ) > 10))
+      user_alive = true;
+    }
+
+    if (((oldValue - newValue ) > 10) && user_alive)
     {
       digitalWrite(RELAY, 1);
       delay(STRIKE_TIME);
       digitalWrite(RELAY, 0);
       oldValue = newValue;
+    }
+    if(spectate_no_damage && (newValue == 0)){ //If its true user won't take damage on spectate mode but if full health player is spectating
+      user_alive = false;                      //the user still take damage but it can change if we stop arduino for 10 second after user dead
+      if(power_off_on_spectate)  //If spectate power off mode true arduino will be off for 5 seconds after user dead
+        delay(5000);          //If we had round counter we won't have to use delay function
     }
   }
 }
